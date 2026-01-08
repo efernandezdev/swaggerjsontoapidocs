@@ -2,6 +2,7 @@ import { writeFile } from "fs";
 import { readFile, mkdir, appendFile, rm } from "fs/promises";
 import * as path from "path";
 import chalk from "chalk";
+import { format } from "prettier";
 
 const mainFolderOutPut = path.join(__dirname, "api_docs");
 
@@ -36,14 +37,12 @@ export async function initScript() {
         if (err) {
           console.error(err);
         } else {
-          console.log("Saved paths.json");
-
           await filterPathsObject();
         }
       }
     );
-  } catch (error: any) {
-    if (error.code === "ECONNREFUSED") {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message.includes("ECONNREFUSED")) {
       console.log(
         chalk.bgRed.white(" ERROR ") +
           chalk.red(
@@ -51,7 +50,7 @@ export async function initScript() {
           )
       );
     } else {
-      console.log(chalk.red(`✘ unknown error: ${error.message}`));
+      console.log(chalk.red(`✘ unknown error: ${error}`));
     }
 
     await cleanFileAndConfig();
@@ -82,6 +81,8 @@ async function filterPathsObject() {
 async function cleanFileAndConfig() {
   await cleanFile();
   await cleanConfig();
+
+  console.log("🧹 Cleaned.");
 }
 
 async function cleanFile() {
@@ -89,18 +90,7 @@ async function cleanFile() {
 }
 
 async function cleanConfig() {
-  writeFile(
-    path.join(__dirname, "config.json"),
-    `{"BASEPATH": "","PATH": ""}`,
-    "utf8",
-    async (err) => {
-      if (err) {
-        console.error(err);
-      } else {
-        console.log("Cleaned config");
-      }
-    }
-  );
+  await rm(path.join(__dirname, "config.json"), { force: true });
 }
 
 async function makeFolders(foldersName: string[]) {
@@ -108,19 +98,19 @@ async function makeFolders(foldersName: string[]) {
 
   for (const folder of [...new Set(foldersName)]) {
     const folderPath = path.join(mainFolderOutPut, folder);
+
     await mkdir(folderPath, { recursive: true });
-    console.log(`Folder created: ${folderPath}`);
   }
 }
 
 async function makeFileContainer(endpoints: string[], foldersName: string[]) {
   for (const folder of [...new Set(foldersName)]) {
     await appendFile(`${mainFolderOutPut}/${folder}/${folder}.ts`, "");
-    console.log(`File created: ${mainFolderOutPut}/${folder}/${folder}.ts`);
   }
 
   for (const [index, folder] of foldersName.entries()) {
     const endpoint = endpoints[index];
+
     const filePath = `${mainFolderOutPut}/${folder}/${folder}.ts`;
 
     // 1. Extract arguments: from "Usuarios/{id}" extract "id"
@@ -129,6 +119,16 @@ async function makeFileContainer(endpoints: string[], foldersName: string[]) {
     const args = paramsMatch
       ? paramsMatch.map((p) => p.replace(/[{}]/g, "").concat(":any")).join(", ")
       : "";
+
+    // Build jsDoc just adding @param
+    let jsDoc = "";
+    if (paramsMatch?.length) {
+      const paramsDoc = paramsMatch
+        .map((p) => ` * @param ${p.replace(/[{}]/g, "")}`)
+        .join("\n");
+
+      jsDoc = `/**\n${paramsDoc}\n */\n`;
+    }
 
     // 2. Clean up the constant name:
     // Replaces special characters with _, collapses duplicates, and removes trailing hyphens
@@ -142,13 +142,32 @@ async function makeFileContainer(endpoints: string[], foldersName: string[]) {
     const templatePath = endpoint.replace(/\{/g, "${");
 
     // 4. Build the final function
-    const line = `export const ${name} = (${args}) => \`${templatePath}\`;\n\n`;
+    const line = `${jsDoc} export const ${name} = (${args}) => \`${templatePath}\`;\n`;
 
     try {
       await appendFile(filePath, line);
+
+      await formatWhitPrettier(filePath);
+
       console.log(`✅ Generated: ${name}`);
     } catch (error) {
       console.error(`❌ Error occurred while writing to ${filePath}:`, error);
     }
   }
+
+  console.log(`💾 show result ---> ${mainFolderOutPut}`);
+}
+
+async function formatWhitPrettier(filePath: string) {
+  const content = await readFile(filePath, "utf8");
+
+  const formatted = await format(content, {
+    parser: "typescript",
+    filepath: filePath,
+    semi: true,
+    singleQuote: true,
+    trailingComma: "all",
+  });
+
+  writeFile(filePath, formatted, () => {});
 }

@@ -1,18 +1,40 @@
 {
-  "name": "scriptapi",
-  "version": "1.0.0",
+  "name": "swaggerjsontoapidocs",
+  "version": "1.1.0",
   "description": "script to convert swagger json to api docs, this help us to consume functions and center all endpoints in one place",
   "main": "index.ts",
   "scripts": {
     "build": "tsc",
     "api": "ts-node ./src/",
-    "dist": "node ./dist/"
+    "dist": "node ./dist/",
+    "lint": "eslint ."
   },
   "author": "Esteban Fernandez",
   "license": "ISC",
   "dependencies": {
     "chalk": "^5.6.2",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "prettier": "^3.7.4"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@types/prettier": "^2.7.3",
+    "eslint": "^9.39.2",
+    "globals": "^17.0.0",
+    "jiti": "^2.6.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.52.0",
+    "ts-node": "^10.9.2"
+  },
+  "files": [
+    "dist",
+    "package.json",
+    "tsconfig.json",
+    "eslint.config.mts"
+  ],
+  "engines": {
+    "node": ">=15.0.0"
+  },
+  "bin": {
+    "swaggerjsontoapidocs": "dist/index.js"
   }
 }

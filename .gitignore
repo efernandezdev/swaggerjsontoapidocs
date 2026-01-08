@@ -2,6 +2,7 @@
 dist/
 build/
 out/
+api_docs/
 
 # Dependencias de Node.js
 node_modules/
