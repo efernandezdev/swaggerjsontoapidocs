@@ -27,9 +27,7 @@
   },
   "files": [
     "dist",
-    "package.json",
-    "tsconfig.json",
-    "eslint.config.mts"
+    "package.json"
   ],
   "engines": {
     "node": ">=15.0.0"
