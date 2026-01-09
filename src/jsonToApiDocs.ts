@@ -3,6 +3,8 @@ import { readFile, mkdir, appendFile, rm } from "fs/promises";
 import * as path from "path";
 import chalk from "chalk";
 import { format } from "prettier";
+import os from "os";
+import { exec } from "child_process";
 
 const mainFolderOutPut = path.join(__dirname, "api_docs");
 
@@ -156,6 +158,33 @@ async function makeFileContainer(endpoints: string[], foldersName: string[]) {
   }
 
   console.log(`💾 show result ---> ${mainFolderOutPut}`);
+  openFileManager(mainFolderOutPut);
+}
+
+function openFileManager(fullPath: string) {
+  const platform = os.platform();
+  let command = "";
+
+  switch (platform) {
+    case "win32":
+      command = `explorer "${fullPath}"`;
+      break;
+    case "darwin":
+      command = `open "${fullPath}"`;
+      break;
+    case "linux":
+      command = `xdg-open "${fullPath}"`;
+      break;
+    default:
+      console.error(`Platform ${platform} is not supported.`);
+      return;
+  }
+
+  exec(command, (error) => {
+    if (error) {
+      console.error(`Error attempting to open folder: ${error.message}`);
+    }
+  });
 }
 
 async function formatWhitPrettier(filePath: string) {

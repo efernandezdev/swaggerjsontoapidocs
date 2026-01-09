@@ -1,13 +1,14 @@
 {
   "name": "swaggerjsontoapidocs",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "script to convert swagger json to api docs, this help us to consume functions and center all endpoints in one place",
   "main": "index.ts",
   "scripts": {
     "build": "tsc",
     "api": "ts-node ./src/",
     "dist": "node ./dist/",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "prepublishOnly": "npm run build"
   },
   "author": "Esteban Fernandez",
   "license": "ISC",
@@ -27,7 +28,8 @@
   },
   "files": [
     "dist",
-    "package.json"
+    "package.json",
+    "!dist/api_docs"
   ],
   "engines": {
     "node": ">=15.0.0"
