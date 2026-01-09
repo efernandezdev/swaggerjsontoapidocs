@@ -26,3 +26,5 @@ yarn-error.log*
 # Archivos de IDE/Sistema (ejemplos)
 .vscode/
 .DS_Store
+
+.npmrc
