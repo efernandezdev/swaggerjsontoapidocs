@@ -1,15 +1,20 @@
 import { writeFile } from "fs";
 import { readFile, mkdir, appendFile, rm } from "fs/promises";
+import { move } from "fs-extra";
 import * as path from "path";
 import chalk from "chalk";
 import { format } from "prettier";
 import os from "os";
 import { exec } from "child_process";
+import { params } from "./interfaces/params";
 
-const mainFolderOutPut = path.join(__dirname, "api_docs");
+const folderName = "api_docs";
+const mainFolderOutPut = path.join(__dirname, folderName);
 
 let urlSwaggerJson = "";
 let basepath = "";
+
+let paramsConfig: params = { skipFolder: false, output: undefined };
 
 async function cleanFolderOutPut() {
   await rm(mainFolderOutPut, {
@@ -18,7 +23,9 @@ async function cleanFolderOutPut() {
   });
 }
 
-export async function initScript() {
+export async function initScript(params: params) {
+  paramsConfig = params;
+
   await cleanFolderOutPut();
 
   const raw = await readFile(path.join(__dirname, "config.json"), "utf8");
@@ -39,6 +46,7 @@ export async function initScript() {
         if (err) {
           console.error(err);
         } else {
+          // Start created folder and files
           await filterPathsObject();
         }
       }
@@ -77,6 +85,12 @@ async function filterPathsObject() {
 
   await makeFileContainer(endpoints, foldersName);
 
+  if (paramsConfig.output) {
+    await moveFolderToChoosePatn();
+  } else {
+    await openFileManager(mainFolderOutPut);
+  }
+
   await cleanFileAndConfig();
 }
 
@@ -98,22 +112,31 @@ async function cleanConfig() {
 async function makeFolders(foldersName: string[]) {
   await mkdir(mainFolderOutPut, { recursive: true });
 
-  for (const folder of [...new Set(foldersName)]) {
-    const folderPath = path.join(mainFolderOutPut, folder);
+  // Created or not folder for each files
+  if (!paramsConfig.skipFolder) {
+    for (const folder of [...new Set(foldersName)]) {
+      const folderPath = path.join(mainFolderOutPut, folder);
 
-    await mkdir(folderPath, { recursive: true });
+      await mkdir(folderPath, { recursive: true });
+    }
   }
 }
 
 async function makeFileContainer(endpoints: string[], foldersName: string[]) {
   for (const folder of [...new Set(foldersName)]) {
-    await appendFile(`${mainFolderOutPut}/${folder}/${folder}.ts`, "");
+    if (paramsConfig.skipFolder) {
+      await appendFile(`${mainFolderOutPut}/${folder}.ts`, "");
+    } else {
+      await appendFile(`${mainFolderOutPut}/${folder}/${folder}.ts`, "");
+    }
   }
 
   for (const [index, folder] of foldersName.entries()) {
     const endpoint = endpoints[index];
 
-    const filePath = `${mainFolderOutPut}/${folder}/${folder}.ts`;
+    const filePath = paramsConfig.skipFolder
+      ? `${mainFolderOutPut}/${folder}.ts`
+      : `${mainFolderOutPut}/${folder}/${folder}.ts`;
 
     // 1. Extract arguments: from "Usuarios/{id}" extract "id"
     const paramsMatch = endpoint.match(/\{([^}]+)\}/g);
@@ -156,35 +179,49 @@ async function makeFileContainer(endpoints: string[], foldersName: string[]) {
       console.error(`❌ Error occurred while writing to ${filePath}:`, error);
     }
   }
-
-  console.log(`💾 show result ---> ${mainFolderOutPut}`);
-  openFileManager(mainFolderOutPut);
 }
 
-function openFileManager(fullPath: string) {
+async function openFileManager(fullPath: string) {
   const platform = os.platform();
+
   let command = "";
 
   switch (platform) {
     case "win32":
-      command = `explorer "${fullPath}"`;
+      command = `explorer`;
       break;
     case "darwin":
-      command = `open "${fullPath}"`;
+      command = `open`;
       break;
     case "linux":
-      command = `xdg-open "${fullPath}"`;
+      command = `xdg-open`;
       break;
     default:
       console.error(`Platform ${platform} is not supported.`);
       return;
   }
 
-  exec(command, (error) => {
-    if (error) {
-      console.error(`Error attempting to open folder: ${error.message}`);
+  // open window managger
+  exec(`${command} "${fullPath}"`);
+
+  console.log("💾 show result --->", fullPath);
+}
+
+async function moveFolderToChoosePatn() {
+  await move(
+    mainFolderOutPut,
+    `${paramsConfig.output}${folderName}`,
+    {
+      overwrite: true,
+    },
+    async (err) => {
+      if (!err) {
+        await openFileManager(
+          path.resolve(`${paramsConfig.output}${folderName}`)
+        );
+      }
     }
-  });
+  );
 }
 
 async function formatWhitPrettier(filePath: string) {

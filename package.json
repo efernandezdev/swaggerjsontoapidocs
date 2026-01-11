@@ -1,6 +1,6 @@
 {
   "name": "swaggerjsontoapidocs",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "script to convert swagger json to api docs, this help us to consume functions and center all endpoints in one place",
   "keywords": [
     "swagger",
@@ -35,11 +35,13 @@
   },
   "dependencies": {
     "chalk": "5.6.2",
+    "fs-extra": "11.3.3",
     "prettier": "3.7.4",
     "yargs": "18.0.0"
   },
   "devDependencies": {
     "@eslint/js": "9.39.2",
+    "@types/fs-extra": "11.0.4",
     "@types/prettier": "2.7.3",
     "@types/yargs": "17.0.35",
     "eslint": "9.39.2",

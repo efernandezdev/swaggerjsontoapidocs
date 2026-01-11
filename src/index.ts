@@ -7,6 +7,7 @@ import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 
 import { initScript } from "./jsonToApiDocs";
+import { params } from "./interfaces/params";
 
 const argv = yargs(hideBin(process.argv))
   .options({
@@ -22,6 +23,17 @@ const argv = yargs(hideBin(process.argv))
       demandOption: true,
       describe: "Basepath to remove from endpoints, e.g.: /api/",
     },
+    output: {
+      alias: "o",
+      type: "string",
+      describe:
+        "Path to the output folder destination, e.g.: -o /example/dir/ -> /example/dir/api_docs",
+    },
+    "skip-folder": {
+      type: "boolean",
+      describe: "Flat files",
+      default: false,
+    },
   })
   .version()
   .help()
@@ -36,9 +48,19 @@ async function main() {
 
   const swaggerPath = argv.swagger;
   const basePath = argv.bp;
+  const skipFolder = argv.skipFolder;
+  const output = argv.output;
 
+  // Just show console.log
   console.log(chalk.blue(`Swagger Path: ${swaggerPath}`));
   console.log(chalk.blue(`Basepath: ${basePath}`));
+  if (skipFolder) {
+    console.log(chalk.blue(`skipFolder: ${skipFolder}`));
+  }
+  if (output) {
+    console.log(chalk.blue(`output folder: ${output}api_docs`));
+  }
+  //
 
   // Write the configuration to a JSON file
   writeFile(
@@ -50,7 +72,11 @@ async function main() {
         console.error(chalk.red("Error writing the configuration file:"), err);
       } else {
         console.log(chalk.green("Configuration file created successfully."));
-        initScript();
+
+        // Object with all flats
+        const params: params = { skipFolder, output };
+
+        initScript(params);
       }
     }
   );
