@@ -3,6 +3,7 @@ dist/
 build/
 out/
 api_docs/
+bin/
 
 # Dependencias de Node.js
 node_modules/

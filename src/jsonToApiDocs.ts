@@ -86,7 +86,7 @@ async function filterPathsObject() {
   await makeFileContainer(endpoints, foldersName);
 
   if (paramsConfig.output) {
-    await moveFolderToChoosePatn();
+    await moveFolderToChoosePath();
   } else {
     await openFileManager(mainFolderOutPut);
   }
@@ -172,7 +172,7 @@ async function makeFileContainer(endpoints: string[], foldersName: string[]) {
     try {
       await appendFile(filePath, line);
 
-      await formatWhitPrettier(filePath);
+      await formatWithPrettier(filePath);
 
       console.log(`✅ Generated: ${name}`);
     } catch (error) {
@@ -207,7 +207,7 @@ async function openFileManager(fullPath: string) {
   console.log("💾 show result --->", fullPath);
 }
 
-async function moveFolderToChoosePatn() {
+async function moveFolderToChoosePath() {
   await move(
     mainFolderOutPut,
     `${paramsConfig.output}${folderName}`,
@@ -224,7 +224,7 @@ async function moveFolderToChoosePatn() {
   );
 }
 
-async function formatWhitPrettier(filePath: string) {
+async function formatWithPrettier(filePath: string) {
   const content = await readFile(filePath, "utf8");
 
   const formatted = await format(content, {

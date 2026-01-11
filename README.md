@@ -25,7 +25,9 @@ npx swaggerjsontoapidocs [options]
 ### Available Arguments
 
 - `-s, --swagger <url>`: Specifies the URL of the Swagger JSON file.
-- `-bp, --basePath <path>`: Defines the base path where the API documentation will be generated.
+- `--bp <path>`: Base path to remove from endpoints (e.g., `/api/`).
+- `-o, --output <path>`: Path to the output folder destination.
+- `--skip-folder`: Generates flat files instead of nested folders.
 
 ### Example Usage
 
@@ -36,7 +38,7 @@ npx swaggerjsontoapidocs -s http://localhost:5033/swagger/v1/swagger.json --bp /
 In this example:
 
 - `-s` points to the URL of the Swagger JSON file.
-- `-bp` defines the base path `/api/` where the documentation will be generated.
+- `--bp` defines the base path `/api/` to be removed from the endpoints.
 
 <details>
   <summary>Swagger.json (Click to expand)</summary>
@@ -187,6 +189,12 @@ In this example:
 
 ### Result
 
+```bash
+├── api_docs
+│   ├── Users
+│       └── Users.ts
+```
+
 ```typescript
 // Users.ts
 export const Users = () => `Users`;
@@ -194,6 +202,26 @@ export const Users = () => `Users`;
  * @param id
  */
 export const Users_id = (id: any) => `Users/${id}`;
+```
+
+### Advanced Usage
+
+```bash
+npx swaggerjsontoapidocs -s http://localhost:5033/swagger/v1/swagger.json --bp /api/ -o ./docs/ --skip-folder
+```
+
+In this example:
+
+- `-o` specifies `./docs/` as the destination folder (resulting in `./docs/api_docs`).
+- `--skip-folder` generates flat files (no nested folders).
+
+### Result --skip-folder
+
+```bash
+docs
+└── api_docs
+    ├── Users.ts
+    └── WeatherForecast.ts
 ```
 
 ## License
