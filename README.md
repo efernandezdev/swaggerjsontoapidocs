@@ -22,6 +22,18 @@ The CLI script is executed using the following command:
 npx swaggerjsontoapidocs [options]
 ```
 
+---
+
+**⚠️ Windows / Git Bash Tip:⚠️**
+
+Git Bash automatically converts root paths (like /api) to Windows paths (like C:\...). To prevent this error, use the MSYS_NO_PATHCONV flag:
+
+```bash
+MSYS_NO_PATHCONV=1 npx swaggerjsontoapidocs [options]
+```
+
+---
+
 ### Available Arguments
 
 - `-s, --swagger <url>`: Specifies the URL of the Swagger JSON file.

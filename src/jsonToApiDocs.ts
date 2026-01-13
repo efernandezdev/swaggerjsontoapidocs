@@ -1,7 +1,6 @@
-import { writeFile } from "fs";
-import { readFile, mkdir, appendFile, rm } from "fs/promises";
+import { readFile, mkdir, rm, writeFile, appendFile } from "fs/promises";
 import { move } from "fs-extra";
-import * as path from "path";
+import { join, resolve } from "path";
 import chalk from "chalk";
 import { format } from "prettier";
 import os from "os";
@@ -9,7 +8,7 @@ import { exec } from "child_process";
 import { params } from "./interfaces/params";
 
 const folderName = "api_docs";
-const mainFolderOutPut = path.join(__dirname, folderName);
+const mainFolderOutPut = join(__dirname, folderName);
 
 let urlSwaggerJson = "";
 let basepath = "";
@@ -28,7 +27,7 @@ export async function initScript(params: params) {
 
   await cleanFolderOutPut();
 
-  const raw = await readFile(path.join(__dirname, "config.json"), "utf8");
+  const raw = await readFile(join(__dirname, "config.json"), "utf8");
   const config = await JSON.parse(raw);
 
   urlSwaggerJson = config.PATH;
@@ -38,19 +37,18 @@ export async function initScript(params: params) {
     const response = await fetch(urlSwaggerJson);
     const data = await response.json();
 
-    writeFile(
-      path.join(__dirname, "paths.json"),
-      `${JSON.stringify(data, null, 2)}`,
-      "utf8",
-      async (err) => {
-        if (err) {
-          console.error(err);
-        } else {
-          // Start created folder and files
-          await filterPathsObject();
-        }
-      }
-    );
+    try {
+      await writeFile(
+        join(__dirname, "paths.json"),
+        `${JSON.stringify(data, null, 2)}`,
+        "utf8"
+      );
+
+      // Start created folder and files
+      await filterPathsObject();
+    } catch (err) {
+      console.error(err);
+    }
   } catch (error: unknown) {
     if (error instanceof Error && error.message.includes("ECONNREFUSED")) {
       console.log(
@@ -70,7 +68,7 @@ export async function initScript(params: params) {
 }
 
 async function filterPathsObject() {
-  const raw = await readFile(path.join(__dirname, "paths.json"), "utf8");
+  const raw = await readFile(join(__dirname, "paths.json"), "utf8");
   const pathsObj = await JSON.parse(raw);
 
   const endpoints = Object.keys(pathsObj.paths).map(
@@ -102,11 +100,11 @@ async function cleanFileAndConfig() {
 }
 
 async function cleanFile() {
-  await rm(path.join(__dirname, "paths.json"), { force: true });
+  await rm(join(__dirname, "paths.json"), { force: true });
 }
 
 async function cleanConfig() {
-  await rm(path.join(__dirname, "config.json"), { force: true });
+  await rm(join(__dirname, "config.json"), { force: true });
 }
 
 async function makeFolders(foldersName: string[]) {
@@ -115,7 +113,7 @@ async function makeFolders(foldersName: string[]) {
   // Created or not folder for each files
   if (!paramsConfig.skipFolder) {
     for (const folder of [...new Set(foldersName)]) {
-      const folderPath = path.join(mainFolderOutPut, folder);
+      const folderPath = join(mainFolderOutPut, folder);
 
       await mkdir(folderPath, { recursive: true });
     }
@@ -208,20 +206,10 @@ async function openFileManager(fullPath: string) {
 }
 
 async function moveFolderToChoosePath() {
-  await move(
-    mainFolderOutPut,
-    `${paramsConfig.output}${folderName}`,
-    {
-      overwrite: true,
-    },
-    async (err) => {
-      if (!err) {
-        await openFileManager(
-          path.resolve(`${paramsConfig.output}${folderName}`)
-        );
-      }
-    }
-  );
+  await move(mainFolderOutPut, `${paramsConfig.output}${folderName}`, {
+    overwrite: true,
+  });
+  await openFileManager(resolve(`${paramsConfig.output}${folderName}`));
 }
 
 async function formatWithPrettier(filePath: string) {
@@ -235,5 +223,5 @@ async function formatWithPrettier(filePath: string) {
     trailingComma: "all",
   });
 
-  writeFile(filePath, formatted, () => {});
+  await writeFile(filePath, formatted, "utf8");
 }
