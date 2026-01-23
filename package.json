@@ -1,6 +1,6 @@
 {
   "name": "swaggerjsontoapidocs",
-  "version": "0.0.0-development",
+  "version": "1.5.2",
   "description": "script to convert swagger json to api docs, this help us to consume functions and center all endpoints in one place",
   "keywords": [
     "swagger",
@@ -22,9 +22,6 @@
     "url": "git+https://github.com/efernandezdev/swaggerjsontoapidocs.git"
   },
   "homepage": "https://github.com/efernandezdev/swaggerjsontoapidocs#readme",
-  "publishConfig": {
-    "access": "public"
-  },
   "main": "bin/index.js",
   "scripts": {
     "build": "tsc",
@@ -44,17 +41,12 @@
   },
   "devDependencies": {
     "@eslint/js": "9.39.2",
-    "@semantic-release/changelog": "^6.0.3",
-    "@semantic-release/git": "^10.0.1",
-    "@semantic-release/github": "^12.0.2",
-    "@semantic-release/npm": "^13.1.2",
     "@types/fs-extra": "11.0.4",
     "@types/prettier": "2.7.3",
     "@types/yargs": "17.0.35",
     "eslint": "9.39.2",
     "globals": "17.0.0",
     "jiti": "2.6.1",
-    "semantic-release": "^25.0.2",
     "ts-node": "10.9.2",
     "typescript": "5.9.3",
     "typescript-eslint": "8.52.0"
