@@ -203,17 +203,23 @@ In this example:
 
 ```bash
 ├── api_docs
-│   ├── Users
-│       └── Users.ts
+│   ├── products
+│       └── products.ts
 ```
 
 ```typescript
-// Users.ts
-export const Users = () => `Users`;
+// products.ts
 /**
+ * @endpoint /api/products
+ * @methods GET - POST
+ */
+export const products = () => `products`;
+/**
+ * @endpoint /api/products/{id}
+ * @methods GET - PUT - DELETE
  * @param id
  */
-export const Users_id = (id: any) => `Users/${id}`;
+export const products_id = (id: any) => `products/${id}`;
 ```
 
 ### Advanced Usage
@@ -232,8 +238,8 @@ In this example:
 ```bash
 docs
 └── api_docs
-    ├── Users.ts
-    └── WeatherForecast.ts
+    ├── products.ts
+    └── weatherforecast.ts
 ```
 
 ## License
