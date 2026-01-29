@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { writeFile } from "fs";
+import { writeFile } from "node:fs";
 import chalk from "chalk";
 import path from "node:path";
 import yargs from "yargs";
@@ -43,7 +43,7 @@ const argv = yargs(hideBin(process.argv))
 
 async function main() {
   console.log(
-    chalk.green("CONFIGURING THE SCRIPT WITH THE PROVIDED ARGUMENTS...")
+    chalk.green("CONFIGURING THE SCRIPT WITH THE PROVIDED ARGUMENTS..."),
   );
 
   const swaggerPath = argv.swagger;
@@ -78,7 +78,7 @@ async function main() {
 
         initScript(params);
       }
-    }
+    },
   );
 }
 

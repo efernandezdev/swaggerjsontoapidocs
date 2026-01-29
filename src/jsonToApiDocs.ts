@@ -1,10 +1,8 @@
-import { readFile, mkdir, rm, writeFile, appendFile } from "fs/promises";
+import { readFile, mkdir, rm, writeFile, appendFile } from "node:fs/promises";
 import { move } from "fs-extra";
-import { join, resolve } from "path";
+import { join, resolve } from "node:path";
 import chalk from "chalk";
 import { format } from "prettier";
-import os from "os";
-import { exec } from "child_process";
 import { params } from "./interfaces/params";
 
 const folderName = "api_docs";
@@ -41,7 +39,7 @@ export async function initScript(params: params) {
       await writeFile(
         join(__dirname, "paths.json"),
         `${JSON.stringify(data, null, 2)}`,
-        "utf8"
+        "utf8",
       );
 
       // Start created folder and files
@@ -54,8 +52,8 @@ export async function initScript(params: params) {
       console.log(
         chalk.bgRed.white(" ERROR ") +
           chalk.red(
-            "Could not connect: The server is off or the URL is incorrect."
-          )
+            "Could not connect: The server is off or the URL is incorrect.",
+          ),
       );
     } else {
       console.log(chalk.red(`✘ unknown error: ${error}`));
@@ -70,23 +68,35 @@ export async function initScript(params: params) {
 async function filterPathsObject() {
   const raw = await readFile(join(__dirname, "paths.json"), "utf8");
   const pathsObj = await JSON.parse(raw);
+  const regexStartWithSlash = /^\//;
 
-  const endpoints = Object.keys(pathsObj.paths).map(
-    (endpoint: string) => endpoint.split(basepath)[1]
+  const apiEndpoints = Object.entries(pathsObj.paths).map(
+    (
+      path: any,
+    ): { endpoint: string; methods: string[]; apiEndpoint: string } => ({
+      endpoint: path[0]
+        .replace(basepath, "")
+        .replace(regexStartWithSlash, "")
+        .toLowerCase(),
+      methods: Object.keys(path[1]),
+      apiEndpoint: path[0].toLowerCase(),
+    }),
   );
 
+  const endpoints = apiEndpoints.map(({ endpoint }) => endpoint);
+
   const foldersName = endpoints.map(
-    (endpoint: string) => endpoint.split("/")[0]
+    (endpoint: string) => endpoint.split("/")[0],
   );
 
   await makeFolders(foldersName);
 
-  await makeFileContainer(endpoints, foldersName);
+  await makeFileContainer(apiEndpoints, foldersName);
 
   if (paramsConfig.output) {
     await moveFolderToChoosePath();
   } else {
-    await openFileManager(mainFolderOutPut);
+    await destinationPath(mainFolderOutPut);
   }
 
   await cleanFileAndConfig();
@@ -112,7 +122,7 @@ async function makeFolders(foldersName: string[]) {
 
   // Created or not folder for each files
   if (!paramsConfig.skipFolder) {
-    for (const folder of [...new Set(foldersName)]) {
+    for (const folder of new Set(foldersName)) {
       const folderPath = join(mainFolderOutPut, folder);
 
       await mkdir(folderPath, { recursive: true });
@@ -120,51 +130,80 @@ async function makeFolders(foldersName: string[]) {
   }
 }
 
-async function makeFileContainer(endpoints: string[], foldersName: string[]) {
-  for (const folder of [...new Set(foldersName)]) {
-    if (paramsConfig.skipFolder) {
-      await appendFile(`${mainFolderOutPut}/${folder}.ts`, "");
-    } else {
-      await appendFile(`${mainFolderOutPut}/${folder}/${folder}.ts`, "");
-    }
+const getFilePath = (folder: string): string => {
+  return paramsConfig.skipFolder
+    ? `${mainFolderOutPut}/${folder}.ts`
+    : `${mainFolderOutPut}/${folder}/${folder}.ts`;
+};
+
+const formatEndpointNames = (endpoint: string) => {
+  const name = endpoint
+    .replace(/[/|{}]/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/(^_)|(_$)/g, "");
+
+  const templatePath = endpoint.replace(/\{/g, "${");
+
+  return { name, templatePath };
+};
+
+const generateDocumentation = (
+  endpoint: string,
+  methods: string[],
+  apiEndpoint: string,
+) => {
+  const paramsMatch = endpoint.match(/\{([^{}]+)\}/g) || [];
+
+  const args = paramsMatch
+    .map((p) => `${p.replace(/[{}]/g, "")}:any`)
+    .join(", ");
+
+  const paramsDoc = paramsMatch
+    .map((p) => `* @param ${p.replace(/[{}]/g, "")}`)
+    .join("\n");
+
+  const endpointLine = apiEndpoint ? `\n* @endpoint ${apiEndpoint}\n` : "";
+
+  const methodsLine = methods
+    ? `* @methods ${methods.join(" - ").toUpperCase()}\n`
+    : "";
+
+  const paramsLine = paramsDoc ? `${paramsDoc}\n` : "";
+
+  const jsDoc = `/**${endpointLine}${methodsLine}${paramsLine}*/\n`;
+
+  return {
+    args,
+    jsDoc,
+  };
+};
+
+async function makeFileContainer(
+  apiEndpoints: { endpoint: string; methods: string[]; apiEndpoint: string }[],
+  foldersName: string[],
+) {
+  // Step 1: Initialize files (Set handles uniqueness)
+  for (const folder of new Set(foldersName)) {
+    await appendFile(getFilePath(folder), "");
   }
 
+  // Step 2: Process endpoints
   for (const [index, folder] of foldersName.entries()) {
-    const endpoint = endpoints[index];
+    const { endpoint, methods, apiEndpoint } = apiEndpoints[index];
 
-    const filePath = paramsConfig.skipFolder
-      ? `${mainFolderOutPut}/${folder}.ts`
-      : `${mainFolderOutPut}/${folder}/${folder}.ts`;
+    // Resolves the destination file path based on configuration.
+    const filePath = getFilePath(folder);
 
-    // 1. Extract arguments: from "Usuarios/{id}" extract "id"
-    const paramsMatch = endpoint.match(/\{([^}]+)\}/g);
+    // Formats the constant name and the URL template.
+    const { name, templatePath } = formatEndpointNames(endpoint);
 
-    const args = paramsMatch
-      ? paramsMatch.map((p) => p.replace(/[{}]/g, "").concat(":any")).join(", ")
-      : "";
+    // Generates the JSDoc and function arguments
+    const { args, jsDoc } = generateDocumentation(
+      endpoint,
+      methods,
+      apiEndpoint,
+    );
 
-    // Build jsDoc just adding @param
-    let jsDoc = "";
-    if (paramsMatch?.length) {
-      const paramsDoc = paramsMatch
-        .map((p) => ` * @param ${p.replace(/[{}]/g, "")}`)
-        .join("\n");
-
-      jsDoc = `/**\n${paramsDoc}\n */\n`;
-    }
-
-    // 2. Clean up the constant name:
-    // Replaces special characters with _, collapses duplicates, and removes trailing hyphens
-    const name = endpoint
-      .replace(/[/|{}]/g, "_")
-      .replace(/_+/g, "_")
-      .replace(/^_|_$/g, "");
-
-    // 3. Format the literal template content:
-    // Change "{id}" to "${id}" to make it a valid JavaScript variable
-    const templatePath = endpoint.replace(/\{/g, "${");
-
-    // 4. Build the final function
     const line = `${jsDoc} export const ${name} = (${args}) => \`${templatePath}\`;\n`;
 
     try {
@@ -179,29 +218,7 @@ async function makeFileContainer(endpoints: string[], foldersName: string[]) {
   }
 }
 
-async function openFileManager(fullPath: string) {
-  const platform = os.platform();
-
-  let command = "";
-
-  switch (platform) {
-    case "win32":
-      command = `explorer`;
-      break;
-    case "darwin":
-      command = `open`;
-      break;
-    case "linux":
-      command = `xdg-open`;
-      break;
-    default:
-      console.error(`Platform ${platform} is not supported.`);
-      return;
-  }
-
-  // open window managger
-  exec(`${command} "${fullPath}"`);
-
+async function destinationPath(fullPath: string) {
   console.log("💾 show result --->", fullPath);
 }
 
@@ -209,7 +226,7 @@ async function moveFolderToChoosePath() {
   await move(mainFolderOutPut, `${paramsConfig.output}${folderName}`, {
     overwrite: true,
   });
-  await openFileManager(resolve(`${paramsConfig.output}${folderName}`));
+  await destinationPath(resolve(`${paramsConfig.output}${folderName}`));
 }
 
 async function formatWithPrettier(filePath: string) {
