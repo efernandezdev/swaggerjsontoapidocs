@@ -1,6 +1,6 @@
 {
   "name": "swaggerjsontoapidocs",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "script to convert swagger json to api docs, this help us to consume functions and center all endpoints in one place",
   "keywords": [
     "swagger",
