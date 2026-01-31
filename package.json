@@ -57,6 +57,6 @@
     "!bin/api_docs"
   ],
   "engines": {
-    "node": ">=15.0.0"
+    "node": ">=20.19.0"
   }
 }
