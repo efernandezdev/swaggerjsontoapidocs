@@ -11,7 +11,11 @@ const mainFolderOutPut = join(__dirname, folderName);
 let urlSwaggerJson = "";
 let basepath = "";
 
-let paramsConfig: params = { skipFolder: false, output: undefined };
+let paramsConfig: params = {
+  skipFolder: false,
+  output: undefined,
+  functionNameLowercase: false,
+};
 
 async function cleanFolderOutPut() {
   await rm(mainFolderOutPut, {
@@ -74,19 +78,16 @@ async function filterPathsObject() {
     (
       path: any,
     ): { endpoint: string; methods: string[]; apiEndpoint: string } => ({
-      endpoint: path[0]
-        .replace(basepath, "")
-        .replace(regexStartWithSlash, "")
-        .toLowerCase(),
+      endpoint: path[0].replace(basepath, "").replace(regexStartWithSlash, ""),
       methods: Object.keys(path[1]),
-      apiEndpoint: path[0].toLowerCase(),
+      apiEndpoint: path[0],
     }),
   );
 
   const endpoints = apiEndpoints.map(({ endpoint }) => endpoint);
 
-  const foldersName = endpoints.map(
-    (endpoint: string) => endpoint.split("/")[0],
+  const foldersName = endpoints.map((endpoint: string) =>
+    endpoint.split("/")[0].toLocaleLowerCase(),
   );
 
   await makeFolders(foldersName);
@@ -136,11 +137,17 @@ const getFilePath = (folder: string): string => {
     : `${mainFolderOutPut}/${folder}/${folder}.ts`;
 };
 
-const formatEndpointNames = (endpoint: string) => {
-  const name = endpoint
+function normalizeEndpoint(endpoint: string, toLowercase: boolean): string {
+  let name = endpoint
     .replace(/[/|{}]/g, "_")
     .replace(/_+/g, "_")
     .replace(/(^_)|(_$)/g, "");
+
+  return toLowercase ? name.toLowerCase() : name;
+}
+
+const formatEndpointNames = (endpoint: string) => {
+  const name = normalizeEndpoint(endpoint, paramsConfig.functionNameLowercase);
 
   const templatePath = endpoint.replace(/\{/g, "${");
 

@@ -34,6 +34,12 @@ const argv = yargs(hideBin(process.argv))
       describe: "Flat files",
       default: false,
     },
+    "function-name-lowercase": {
+      alias: "fnl",
+      type: "boolean",
+      describe: "Force all function names to lowercase for consistency",
+      default: false,
+    },
   })
   .version()
   .help()
@@ -50,6 +56,7 @@ async function main() {
   const basePath = argv.bp;
   const skipFolder = argv.skipFolder;
   const output = argv.output;
+  const functionNameLowercase = argv.functionNameLowercase;
 
   // Just show console.log
   console.log(chalk.blue(`Swagger Path: ${swaggerPath}`));
@@ -59,6 +66,9 @@ async function main() {
   }
   if (output) {
     console.log(chalk.blue(`output folder: ${output}api_docs`));
+  }
+  if (functionNameLowercase) {
+    console.log(chalk.blue(`functionNameLowercase: ${functionNameLowercase}`));
   }
   //
 
@@ -74,7 +84,7 @@ async function main() {
         console.log(chalk.green("Configuration file created successfully."));
 
         // Object with all flats
-        const params: params = { skipFolder, output };
+        const params: params = { skipFolder, output, functionNameLowercase };
 
         initScript(params);
       }

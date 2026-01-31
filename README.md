@@ -40,6 +40,7 @@ MSYS_NO_PATHCONV=1 npx swaggerjsontoapidocs [options]
 - `--bp <path>`: Base path to remove from endpoints (e.g., `/api/`).
 - `-o, --output <path>`: Path to the output folder destination.
 - `--skip-folder`: Generates flat files instead of nested folders.
+- `--fnl, --function-name-lowercase`: Force all function names to lowercase for consistency.
 
 ### Example Usage
 
@@ -215,11 +216,25 @@ In this example:
  */
 export const products = () => `products`;
 /**
- * @endpoint /api/products/{id}
+ * @endpoint /api/products/{id}/category/{categoryId}
  * @methods GET - PUT - DELETE
  * @param id
  */
-export const products_id = (id: any) => `products/${id}`;
+export const products_id_category_categoryId = (id: any) =>
+  `products/${id}/category/${categoryId}`;
+```
+
+### Result --function-name-lowercase
+
+```typescript
+// products.ts
+/**
+ * @endpoint /api/products/{id}/category/{categoryId}
+ * @methods GET - PUT - DELETE
+ * @param id
+ */
+export const products_id_category_categoryid = (id: any) =>
+  `products/${id}/category/${categoryId}`;
 ```
 
 ### Advanced Usage
