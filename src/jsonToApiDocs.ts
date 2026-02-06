@@ -1,15 +1,16 @@
-import { readFile, mkdir, rm, writeFile, appendFile } from "node:fs/promises";
-import { move } from "fs-extra";
-import { join, resolve } from "node:path";
-import chalk from "chalk";
-import { format } from "prettier";
-import { params } from "./interfaces/params";
+import { readFile, mkdir, rm, writeFile, appendFile } from 'node:fs/promises';
+import { move } from 'fs-extra';
+import { join, resolve } from 'node:path';
+import chalk from 'chalk';
+import { format } from 'prettier';
+import { params } from './interfaces/params';
+import { apiEndpoints, methods } from './interfaces/apiEndpoints';
 
-const folderName = "api_docs";
+const folderName = 'api_docs';
 const mainFolderOutPut = join(__dirname, folderName);
 
-let urlSwaggerJson = "";
-let basepath = "";
+let urlSwaggerJson = '';
+let basepath = '';
 
 let paramsConfig: params = {
   skipFolder: false,
@@ -29,7 +30,7 @@ export async function initScript(params: params) {
 
   await cleanFolderOutPut();
 
-  const raw = await readFile(join(__dirname, "config.json"), "utf8");
+  const raw = await readFile(join(__dirname, 'config.json'), 'utf8');
   const config = await JSON.parse(raw);
 
   urlSwaggerJson = config.PATH;
@@ -41,9 +42,9 @@ export async function initScript(params: params) {
 
     try {
       await writeFile(
-        join(__dirname, "paths.json"),
+        join(__dirname, 'paths.json'),
         `${JSON.stringify(data, null, 2)}`,
-        "utf8",
+        'utf8',
       );
 
       // Start created folder and files
@@ -52,11 +53,11 @@ export async function initScript(params: params) {
       console.error(err);
     }
   } catch (error: unknown) {
-    if (error instanceof Error && error.message.includes("ECONNREFUSED")) {
+    if (error instanceof Error && error.message.includes('ECONNREFUSED')) {
       console.log(
-        chalk.bgRed.white(" ERROR ") +
+        chalk.bgRed.white(' ERROR ') +
           chalk.red(
-            "Could not connect: The server is off or the URL is incorrect.",
+            'Could not connect: The server is off or the URL is incorrect.',
           ),
       );
     } else {
@@ -70,24 +71,30 @@ export async function initScript(params: params) {
 }
 
 async function filterPathsObject() {
-  const raw = await readFile(join(__dirname, "paths.json"), "utf8");
+  const raw = await readFile(join(__dirname, 'paths.json'), 'utf8');
   const pathsObj = await JSON.parse(raw);
   const regexStartWithSlash = /^\//;
 
   const apiEndpoints = Object.entries(pathsObj.paths).map(
-    (
-      path: any,
-    ): { endpoint: string; methods: string[]; apiEndpoint: string } => ({
-      endpoint: path[0].replace(basepath, "").replace(regexStartWithSlash, ""),
-      methods: Object.keys(path[1]),
-      apiEndpoint: path[0],
-    }),
+    ([pathKey, pathValue]): apiEndpoints => {
+      const endpoint = pathKey
+        .replace(basepath, '')
+        .replace(regexStartWithSlash, '');
+
+      const methods = Object.entries(pathValue as Record<string, methods>).map(
+        ([verb, { summary }]) => ({ verb, summary }),
+      );
+
+      const apiEndpoint = pathKey;
+
+      return { endpoint, methods, apiEndpoint };
+    },
   );
 
   const endpoints = apiEndpoints.map(({ endpoint }) => endpoint);
 
   const foldersName = endpoints.map((endpoint: string) =>
-    endpoint.split("/")[0].toLocaleLowerCase(),
+    endpoint.split('/')[0].toLocaleLowerCase(),
   );
 
   await makeFolders(foldersName);
@@ -107,15 +114,15 @@ async function cleanFileAndConfig() {
   await cleanFile();
   await cleanConfig();
 
-  console.log("🧹 Cleaned.");
+  console.log('🧹 Cleaned.');
 }
 
 async function cleanFile() {
-  await rm(join(__dirname, "paths.json"), { force: true });
+  await rm(join(__dirname, 'paths.json'), { force: true });
 }
 
 async function cleanConfig() {
-  await rm(join(__dirname, "config.json"), { force: true });
+  await rm(join(__dirname, 'config.json'), { force: true });
 }
 
 async function makeFolders(foldersName: string[]) {
@@ -138,44 +145,61 @@ const getFilePath = (folder: string): string => {
 };
 
 function normalizeEndpoint(endpoint: string, toLowercase: boolean): string {
-  let name = endpoint
-    .replace(/[/|{}]/g, "_")
-    .replace(/_+/g, "_")
-    .replace(/(^_)|(_$)/g, "");
+  const name = endpoint
+    .split('/')
+    .map((value) => {
+      if (value.startsWith('{')) {
+        return value;
+      } else {
+        return toLowercase ? value.toLowerCase() : value;
+      }
+    })
+    .join('_')
+    .replace(/[/|{}]/g, '');
 
-  return toLowercase ? name.toLowerCase() : name;
+  return name;
 }
 
 const formatEndpointNames = (endpoint: string) => {
   const name = normalizeEndpoint(endpoint, paramsConfig.functionNameLowercase);
 
-  const templatePath = endpoint.replace(/\{/g, "${");
+  const templatePath = endpoint.replace(/\{/g, '${');
 
   return { name, templatePath };
 };
 
 const generateDocumentation = (
   endpoint: string,
-  methods: string[],
+  methods: methods[],
   apiEndpoint: string,
 ) => {
   const paramsMatch = endpoint.match(/\{([^{}]+)\}/g) || [];
 
   const args = paramsMatch
-    .map((p) => `${p.replace(/[{}]/g, "")}:any`)
-    .join(", ");
+    .map((p) => `${p.replace(/[{}]/g, '')}:any`)
+    .join(', ');
 
   const paramsDoc = paramsMatch
-    .map((p) => `* @param ${p.replace(/[{}]/g, "")}`)
-    .join("\n");
+    .map((p) => `* @param ${p.replace(/[{}]/g, '')}`)
+    .join('\n');
 
-  const endpointLine = apiEndpoint ? `\n* @endpoint ${apiEndpoint}\n` : "";
+  const endpointLine = apiEndpoint ? `\n* @endpoint ${apiEndpoint}\n` : '';
 
-  const methodsLine = methods
-    ? `* @methods ${methods.join(" - ").toUpperCase()}\n`
-    : "";
+  const methodsDoc = methods
+    .map((method) => {
+      let doc = '* @method ' + method.verb.toUpperCase();
 
-  const paramsLine = paramsDoc ? `${paramsDoc}\n` : "";
+      if (method.summary) {
+        doc += ` - ${method.summary}`;
+      }
+
+      return doc;
+    })
+    .join('\n');
+
+  const methodsLine = methodsDoc ? `${methodsDoc}\n` : '';
+
+  const paramsLine = paramsDoc ? `${paramsDoc}\n` : '';
 
   const jsDoc = `/**${endpointLine}${methodsLine}${paramsLine}*/\n`;
 
@@ -186,12 +210,12 @@ const generateDocumentation = (
 };
 
 async function makeFileContainer(
-  apiEndpoints: { endpoint: string; methods: string[]; apiEndpoint: string }[],
+  apiEndpoints: apiEndpoints[],
   foldersName: string[],
 ) {
   // Step 1: Initialize files (Set handles uniqueness)
   for (const folder of new Set(foldersName)) {
-    await appendFile(getFilePath(folder), "");
+    await appendFile(getFilePath(folder), '');
   }
 
   // Step 2: Process endpoints
@@ -226,7 +250,7 @@ async function makeFileContainer(
 }
 
 async function destinationPath(fullPath: string) {
-  console.log("💾 show result --->", fullPath);
+  console.log('💾 show result --->', fullPath);
 }
 
 async function moveFolderToChoosePath() {
@@ -237,15 +261,16 @@ async function moveFolderToChoosePath() {
 }
 
 async function formatWithPrettier(filePath: string) {
-  const content = await readFile(filePath, "utf8");
+  const content = await readFile(filePath, 'utf8');
 
   const formatted = await format(content, {
-    parser: "typescript",
+    parser: 'typescript',
     filepath: filePath,
     semi: true,
     singleQuote: true,
-    trailingComma: "all",
+    trailingComma: 'all',
+    endOfLine: 'crlf',
   });
 
-  await writeFile(filePath, formatted, "utf8");
+  await writeFile(filePath, formatted, 'utf8');
 }
