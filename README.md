@@ -36,11 +36,12 @@ MSYS_NO_PATHCONV=1 npx swaggerjsontoapidocs [options]
 
 ### Available Arguments
 
-- `-s, --swagger <url>`: Specifies the URL of the Swagger JSON file.
-- `--bp <path>`: Base path to remove from endpoints (e.g., `/api/`).
-- `-o, --output <path>`: Path to the output folder destination.
-- `--skip-folder`: Generates flat files instead of nested folders.
-- `--fnl, --function-name-lowercase`: Force all function names to lowercase for consistency.
+- `-s, --swagger <url>` : URL of the Swagger/OpenAPI JSON (required).
+- `--bp <path>` : Base path to remove from endpoints (e.g. `/api/`) (required).
+- `-o, --output <path>` : Destination folder for generated files (optional).
+- `--skip-folder` : Generate flat files (no nested folders).
+- `--fnl` : Force function names to lowercase.
+- `-e, --ext <.ts|.js>` : Output file extension for generated files. Allowed values: `.ts` (default) or `.js`.
 
 ### Example Usage
 

@@ -16,6 +16,7 @@ let paramsConfig: params = {
   skipFolder: false,
   output: undefined,
   functionNameLowercase: false,
+  ext: '.ts',
 };
 
 async function cleanFolderOutPut() {
@@ -139,9 +140,11 @@ async function makeFolders(foldersName: string[]) {
 }
 
 const getFilePath = (folder: string): string => {
+  const ext = paramsConfig.ext ?? '.ts';
+
   return paramsConfig.skipFolder
-    ? `${mainFolderOutPut}/${folder}.ts`
-    : `${mainFolderOutPut}/${folder}/${folder}.ts`;
+    ? `${mainFolderOutPut}/${folder}${ext}`
+    : `${mainFolderOutPut}/${folder}/${folder}${ext}`;
 };
 
 function normalizeEndpoint(endpoint: string, toLowercase: boolean): string {
@@ -176,7 +179,11 @@ const generateDocumentation = (
   const paramsMatch = endpoint.match(/\{([^{}]+)\}/g) || [];
 
   const args = paramsMatch
-    .map((p) => `${p.replace(/[{}]/g, '')}:any`)
+    .map((p) => {
+      const name = p.replace(/[{}]/g, '');
+
+      return paramsConfig.ext === '.ts' ? `${name}: any` : name;
+    })
     .join(', ');
 
   const paramsDoc = paramsMatch
@@ -263,8 +270,10 @@ async function moveFolderToChoosePath() {
 async function formatWithPrettier(filePath: string) {
   const content = await readFile(filePath, 'utf8');
 
+  const parser = filePath.endsWith('.ts') ? 'typescript' : 'babel';
+
   const formatted = await format(content, {
-    parser: 'typescript',
+    parser,
     filepath: filePath,
     semi: true,
     singleQuote: true,
