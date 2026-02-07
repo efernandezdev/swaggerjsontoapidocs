@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/efernandezdev/swaggerjsontoapidocs/compare/v1.8.0...v1.9.0) (2026-02-07)
+
+
+### Features
+
+* add file extension option with -e and --ext flags ([b0f15e3](https://github.com/efernandezdev/swaggerjsontoapidocs/commit/b0f15e384bbbc0bb5d32242005a3ab051d177079))
+
 # [1.8.0](https://github.com/efernandezdev/swaggerjsontoapidocs/compare/v1.7.0...v1.8.0) (2026-02-06)
 
 
