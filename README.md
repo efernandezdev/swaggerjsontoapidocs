@@ -219,8 +219,9 @@ export const products = () => `products`;
  * @endpoint /api/products/{id}/category/{categoryId}
  * @methods GET - PUT - DELETE
  * @param id
+ * @param categoryId
  */
-export const products_id_category_categoryId = (id: any) =>
+export const products_id_category_categoryId = (id: any, categoryId: any) =>
   `products/${id}/category/${categoryId}`;
 ```
 
@@ -232,8 +233,9 @@ export const products_id_category_categoryId = (id: any) =>
  * @endpoint /api/products/{id}/category/{categoryId}
  * @methods GET - PUT - DELETE
  * @param id
+ * @param categoryId
  */
-export const products_id_category_categoryid = (id: any) =>
+export const products_id_category_categoryid = (id: any, categoryId: any) =>
   `products/${id}/category/${categoryId}`;
 ```
 
