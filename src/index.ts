@@ -40,6 +40,13 @@ const argv = yargs(hideBin(process.argv))
       describe: 'Force all function names to lowercase for consistency',
       default: false,
     },
+    ext: {
+      alias: 'e',
+      type: 'string',
+      choices: ['.ts', '.js'] as unknown as string[],
+      describe: 'Choose generated file extension: .ts or .js',
+      default: '.ts',
+    },
   })
   .version()
   .help()
@@ -57,6 +64,7 @@ async function main() {
   const skipFolder = argv.skipFolder;
   const output = argv.output;
   const functionNameLowercase = argv.functionNameLowercase;
+  const ext = argv.ext as params['ext'];
 
   // Just show console.log
   console.log(chalk.blue(`Swagger Path: ${swaggerPath}`));
@@ -69,6 +77,9 @@ async function main() {
   }
   if (functionNameLowercase) {
     console.log(chalk.blue(`functionNameLowercase: ${functionNameLowercase}`));
+  }
+  if (ext) {
+    console.log(chalk.blue(`file extension: ${ext}`));
   }
   //
 
@@ -84,7 +95,12 @@ async function main() {
         console.log(chalk.green('Configuration file created successfully.'));
 
         // Object with all flats
-        const params: params = { skipFolder, output, functionNameLowercase };
+        const params: params = {
+          skipFolder,
+          output,
+          functionNameLowercase,
+          ext,
+        };
 
         initScript(params);
       }
