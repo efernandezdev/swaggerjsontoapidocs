@@ -17,19 +17,36 @@ jobs:
       pull-requests: write
       id-token: write
     steps:
+      # 1. Generar token dinámico de la GitHub App
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PK }}
+
+      # 2. Checkout usando el token de la App
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: false # <--- Crucial para que git use el token de la App después
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "lts/*"
+          node-version: 'lts/*'
+
       - name: Install dependencies
         run: npm clean-install
-      - name: Verify the integrity of provenance attestations and registry signatures for installed dependencies
+
+      - name: Verify signatures
         run: npm audit signatures
+
+      # 3. Ejecutar Release con el token de la App
       - name: Release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Reemplazamos secrets.GITHUB_TOKEN por el de la App
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: npx semantic-release
