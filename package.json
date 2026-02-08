@@ -31,7 +31,18 @@
     "api": "ts-node ./src/index.ts",
     "dist": "node ./bin/index.js",
     "lint": "eslint .",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "prepare": "simple-git-hooks"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "npx lint-staged",
+    "commit-msg": "npx commitlint --edit $1"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "prettier --write",
+      "eslint --quiet"
+    ]
   },
   "bin": {
     "swaggerjsontoapidocs": "bin/index.js"
@@ -43,6 +54,8 @@
     "yargs": "18.0.0"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.4.1",
+    "@commitlint/config-conventional": "^20.4.1",
     "@eslint/js": "9.39.2",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
@@ -54,7 +67,9 @@
     "eslint": "9.39.2",
     "globals": "17.0.0",
     "jiti": "2.6.1",
+    "lint-staged": "^16.2.7",
     "semantic-release": "^25.0.2",
+    "simple-git-hooks": "^2.13.1",
     "ts-node": "10.9.2",
     "typescript": "5.9.3",
     "typescript-eslint": "8.52.0"
