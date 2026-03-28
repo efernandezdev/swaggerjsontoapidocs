@@ -62,7 +62,7 @@ export async function initScript(params: params) {
           ),
       );
     } else {
-      console.log(chalk.red(`✘ unknown error: ${error}`));
+      console.log(chalk.red(`unknown error: ${error}`));
     }
 
     await cleanFileAndConfig();
@@ -115,7 +115,7 @@ async function cleanFileAndConfig() {
   await cleanFile();
   await cleanConfig();
 
-  console.log('🧹 Cleaned.');
+  console.log('Cleaned.');
 }
 
 async function cleanFile() {
@@ -187,28 +187,39 @@ const generateDocumentation = (
     .join(', ');
 
   const paramsDoc = paramsMatch
-    .map((p) => `* @param ${p.replace(/[{}]/g, '')}`)
+    .map((p) => `* @param ${p.replace(/[{}]/g, '')} - any`)
     .join('\n');
 
-  const endpointLine = apiEndpoint ? `\n* @endpoint ${apiEndpoint}\n` : '';
+  const endpointLine = apiEndpoint
+    ? `*\n* ---\n* **Endpoint**: \`${apiEndpoint}\``
+    : '*';
 
   const methodsDoc = methods
-    .map((method) => {
-      let doc = '* @method ' + method.verb.toUpperCase();
+    .map((method, index) => {
+      let doc = '* **' + method.verb.toUpperCase() + '**: ';
 
-      if (method.summary) {
-        doc += ` - ${method.summary}`;
+      doc += method.summary ? `${method.summary}` : `without summary`;
+
+      if (index + 1 !== methods.length) {
+        doc += '\n*';
       }
 
       return doc;
     })
     .join('\n');
 
-  const methodsLine = methodsDoc ? `${methodsDoc}\n` : '';
+  const methodsLine = methodsDoc ? `* ##### METHODS\n${methodsDoc}` : '*';
 
-  const paramsLine = paramsDoc ? `${paramsDoc}\n` : '';
+  const paramsLine = paramsDoc
+    ? `*\n* ---\n* ##### PATH PARAMETERS\n${paramsDoc}`
+    : '*';
 
-  const jsDoc = `/**${endpointLine}${methodsLine}${paramsLine}*/\n`;
+  const jsDoc = `
+/**
+${methodsLine}
+${endpointLine}
+${paramsLine}
+*/\n`;
 
   return {
     args,
@@ -249,15 +260,15 @@ async function makeFileContainer(
 
       await formatWithPrettier(filePath);
 
-      console.log(`✅ Generated: ${name}`);
+      console.log(`Generated: ${name}`);
     } catch (error) {
-      console.error(`❌ Error occurred while writing to ${filePath}:`, error);
+      console.error(`Error occurred while writing to ${filePath}:`, error);
     }
   }
 }
 
 async function destinationPath(fullPath: string) {
-  console.log('💾 show result --->', fullPath);
+  console.log('show result --->', fullPath);
 }
 
 async function moveFolderToChoosePath() {

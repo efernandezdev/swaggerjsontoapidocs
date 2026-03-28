@@ -46,153 +46,158 @@ MSYS_NO_PATHCONV=1 npx swaggerjsontoapidocs [options]
 ### Example Usage
 
 ```bash
-npx swaggerjsontoapidocs -s http://localhost:5033/swagger/v1/swagger.json --bp /api/
+npx swaggerjsontoapidocs -s http://localhost:5033/swagger/v1/swagger.json --bp /api/v1/
 ```
 
 In this example:
 
 - `-s` points to the URL of the Swagger JSON file.
-- `--bp` defines the base path `/api/` to be removed from the endpoints.
+- `--bp` defines the base path `/api/v1/` to be removed from the endpoints.
 
 <details>
   <summary>Swagger.json (Click to expand)</summary>
 
 ```json
 {
-  "openapi": "3.0.1",
+  "swagger": "2.0",
   "info": {
-    "title": "fakeApi",
-    "version": "1.0"
+    "version": "1.2.0",
+    "title": "Extended Sample API with Multiple Path Parameters",
+    "description": "Test Swagger specification including endpoints with multiple path parameters."
   },
   "paths": {
-    "/api/Users": {
+    "/api/v1/users/{userId}/orders/{orderId}": {
       "get": {
-        "tags": ["Users"],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Usuario"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Usuario"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Usuario"
-                  }
-                }
-              }
-            }
+        "tags": ["Order Processing"],
+        "summary": "Get a specific order for a user",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "type": "string"
           }
+        ],
+        "responses": {
+          "200": { "description": "Order details" },
+          "404": { "description": "Order not found" }
+        }
+      },
+      "put": {
+        "tags": ["Order Processing"],
+        "summary": "Update a specific order for a user",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/Order" }
+          }
+        ],
+        "responses": { "200": { "description": "Order updated" } }
+      }
+    },
+    "/api/v1/Products/{productId}/Reviews/{reviewId}/Comments/{commentId}": {
+      "delete": {
+        "tags": ["Reviews"],
+        "summary": "Delete a specific comment on a review",
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "reviewId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": { "description": "Comment deleted" },
+          "404": { "description": "Comment not found" }
         }
       }
     },
-    "/api/Users/{id}": {
-      "get": {
-        "tags": ["Users"],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/Usuario"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Usuario"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Usuario"
-                }
-              }
-            }
-          }
-        }
-      },
+    "/api/v1/admin/{section}/{entityId}/actions/{actionId}": {
       "post": {
-        "tags": ["Users"],
+        "tags": ["Administration"],
+        "summary": "Perform an admin action on an entity",
         "parameters": [
           {
-            "name": "id",
+            "name": "section",
             "in": "path",
             "required": true,
+            "type": "string"
+          },
+          {
+            "name": "entityId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "actionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": false,
             "schema": {
-              "type": "string"
+              "type": "object",
+              "properties": {
+                "reason": { "type": "string" },
+                "timestamp": { "type": "string", "format": "date-time" }
+              }
             }
           }
         ],
         "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/Usuario"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Usuario"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Usuario"
-                }
-              }
-            }
-          }
+          "200": { "description": "Action executed successfully" },
+          "400": { "description": "Invalid action" }
         }
       }
     }
   },
-  "components": {
-    "schemas": {
-      "Usuario": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "nullable": true
-          },
-          "nombre": {
-            "type": "string",
-            "nullable": true
-          },
-          "email": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
+  "definitions": {
+    "Order": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "status": { "type": "string" },
+        "items": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
       }
     }
   }
@@ -204,46 +209,52 @@ In this example:
 ### Result
 
 ```bash
-├── api_docs
-│   ├── products
-│       └── products.ts
+api_docs/
+├── admin
+│   └── admin.ts
+├── products
+│   └── products.ts
+└── users
+    └── users.ts
 ```
 
 ```typescript
 // products.ts
 /**
- * @endpoint /api/products
- * @methods GET - POST
+ * ##### METHODS
+ * **DELETE**: Delete a specific comment on a review
+ *
+ * ---
+ * **Endpoint**: `/api/v1/Products/{productId}/Reviews/{reviewId}/Comments/{commentId}`
+ *
+ * ---
+ * ##### PATH PARAMETERS
+ * @param productId - any
+ * @param reviewId - any
+ * @param commentId - any
  */
-export const products = () => `products`;
-/**
- * @endpoint /api/products/{id}/category/{categoryId}
- * @methods GET - PUT - DELETE
- * @param id
- * @param categoryId
- */
-export const products_id_category_categoryId = (id: any, categoryId: any) =>
-  `products/${id}/category/${categoryId}`;
+export const Products_productId_Reviews_reviewId_Comments_commentId = (
+  productId: any,
+  reviewId: any,
+  commentId: any,
+) => `Products/${productId}/Reviews/${reviewId}/Comments/${commentId}`;
 ```
 
 ### Result --function-name-lowercase
 
 ```typescript
 // products.ts
-/**
- * @endpoint /api/products/{id}/category/{categoryId}
- * @methods GET - PUT - DELETE
- * @param id
- * @param categoryId
- */
-export const products_id_category_categoryid = (id: any, categoryId: any) =>
-  `products/${id}/category/${categoryId}`;
+export const products_productId_reviews_reviewId_comments_commentId = (
+  productId: any,
+  reviewId: any,
+  commentId: any,
+) => `Products/${productId}/Reviews/${reviewId}/Comments/${commentId}`;
 ```
 
 ### Advanced Usage
 
 ```bash
-npx swaggerjsontoapidocs -s http://localhost:5033/swagger/v1/swagger.json --bp /api/ -o ./docs/ --skip-folder
+npx swaggerjsontoapidocs -s http://localhost:5033/swagger/v1/swagger.json --bp /api/v1/ -o ./docs/ --skip-folder
 ```
 
 In this example:
@@ -254,10 +265,11 @@ In this example:
 ### Result --skip-folder
 
 ```bash
-docs
+docs/
 └── api_docs
+    ├── admin.ts
     ├── products.ts
-    └── weatherforecast.ts
+    └── users.ts
 ```
 
 ## License
