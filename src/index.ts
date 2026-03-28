@@ -54,7 +54,7 @@ const argv = yargs(hideBin(process.argv))
   .strict()
   .parseSync();
 
-async function main() {
+function main() {
   console.log(
     chalk.green('CONFIGURING THE SCRIPT WITH THE PROVIDED ARGUMENTS...'),
   );
