@@ -1,3 +1,10 @@
+# [1.10.0](https://github.com/efernandezdev/swaggerjsontoapidocs/compare/v1.9.0...v1.10.0) (2026-03-28)
+
+
+### Features
+
+* modify js-docs, update readme and uninstall chalk to clean dependencies ([04c64fd](https://github.com/efernandezdev/swaggerjsontoapidocs/commit/04c64fd1313213e99d936b1716a065c5e1da78a7))
+
 # [1.9.0](https://github.com/efernandezdev/swaggerjsontoapidocs/compare/v1.8.0...v1.9.0) (2026-02-07)
 
 
