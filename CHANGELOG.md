@@ -1,3 +1,10 @@
+## [1.10.1](https://github.com/efernandezdev/swaggerjsontoapidocs/compare/v1.10.0...v1.10.1) (2026-04-26)
+
+
+### Bug Fixes
+
+* add cleaned to fix error with - on named function ([e79ca3b](https://github.com/efernandezdev/swaggerjsontoapidocs/commit/e79ca3b0aafaa0957c5d3f648ae10408eff74208))
+
 # [1.10.0](https://github.com/efernandezdev/swaggerjsontoapidocs/compare/v1.9.0...v1.10.0) (2026-03-28)
 
 
