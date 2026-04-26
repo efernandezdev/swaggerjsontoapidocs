@@ -148,7 +148,9 @@ const getFilePath = (folder: string): string => {
 };
 
 function normalizeEndpoint(endpoint: string, toLowercase: boolean): string {
-  const name = endpoint
+  const endpointCleaned = endpoint.replace(/[^a-zA-Z0-9_$/]/g, '');
+
+  const name = endpointCleaned
     .split('/')
     .map((value) => {
       if (value.startsWith('{')) {
