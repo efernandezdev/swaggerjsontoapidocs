@@ -83,7 +83,12 @@ async function filterPathsObject() {
         .replace(regexStartWithSlash, '');
 
       const methods = Object.entries(pathValue as Record<string, methods>).map(
-        ([verb, { summary }]) => ({ verb, summary }),
+        ([verb, { summary, responses, requestBody }]) => ({
+          verb,
+          summary,
+          responses,
+          requestBody,
+        }),
       );
 
       const apiEndpoint = pathKey;
@@ -173,6 +178,40 @@ const formatEndpointNames = (endpoint: string) => {
   return { name, templatePath };
 };
 
+const findRefs = (
+  obj: methods['requestBody'] | methods['responses'],
+): { refs: Set<string>; type: Set<string> } => {
+  const refs = new Set<string>();
+  const type = new Set<string>();
+
+  const traverse = (
+    value: methods['requestBody'] | methods['responses'],
+  ): void => {
+    if (!value || typeof value !== 'object') return;
+
+    if (Array.isArray(value)) {
+      value.forEach(traverse);
+      return;
+    }
+
+    for (const [key, child] of Object.entries(value)) {
+      if (key === 'type' && typeof child === 'string') {
+        type.add(child);
+      }
+
+      if (key === '$ref' && typeof child === 'string') {
+        refs.add(child);
+      }
+
+      traverse(child);
+    }
+  };
+
+  traverse(obj);
+
+  return { refs, type };
+};
+
 const generateDocumentation = (
   endpoint: string,
   methods: methods[],
@@ -202,6 +241,16 @@ const generateDocumentation = (
 
       doc += method.summary ? `${method.summary}` : `without summary`;
 
+      const requestBody = findRefs(method.requestBody);
+      doc += requestBody.refs.size
+        ? `\n*\n* **Request Body**: ${normalizePascalCase(requestBody)}`
+        : '';
+
+      const responses = findRefs(method.responses);
+      doc += responses.refs.size
+        ? `\n*\n* **Response**: ${normalizePascalCase(responses)}${checkArrayType(responses)}`
+        : '';
+
       if (index + 1 !== methods.length) {
         doc += '\n*';
       }
@@ -228,6 +277,26 @@ ${paramsLine}
     jsDoc,
   };
 };
+
+const checkArrayType = (responses: {
+  refs: Set<string>;
+  type: Set<string>;
+}): '' | '[]' =>
+  responses.type.size && [...responses.type][0].toLowerCase() === 'array'
+    ? '[]'
+    : '';
+
+const normalizePascalCase = (data: {
+  refs: Set<string>;
+  type: Set<string>;
+}): string | undefined =>
+  [...data.refs][0]
+    .split('/')
+    .pop()
+    ?.split(' ')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join('');
 
 async function makeFileContainer(
   apiEndpoints: apiEndpoints[],
