@@ -1,3 +1,10 @@
+# [1.11.0](https://github.com/efernandezdev/swaggerjsontoapidocs/compare/v1.10.1...v1.11.0) (2026-08-22)
+
+
+### Features
+
+* add requestbody and response into jsdoc ([64a1fdf](https://github.com/efernandezdev/swaggerjsontoapidocs/commit/64a1fdf5dd4116743fca348aee932b66e26b072c))
+
 ## [1.10.1](https://github.com/efernandezdev/swaggerjsontoapidocs/compare/v1.10.0...v1.10.1) (2026-04-26)
 
 
