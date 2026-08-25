@@ -1,3 +1,10 @@
+# [1.12.0](https://github.com/efernandezdev/swaggerjsontoapidocs/compare/v1.11.0...v1.12.0) (2026-08-25)
+
+
+### Features
+
+* enhance README and CLI to support query parameters and API model integration ([89a321a](https://github.com/efernandezdev/swaggerjsontoapidocs/commit/89a321aa479726fd19b08cdb9adde7292769f4c3))
+
 # [1.11.0](https://github.com/efernandezdev/swaggerjsontoapidocs/compare/v1.10.1...v1.11.0) (2026-08-22)
 
 
