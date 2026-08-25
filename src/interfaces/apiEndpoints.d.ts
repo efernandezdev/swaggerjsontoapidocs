@@ -7,6 +7,7 @@ export interface apiEndpoints {
 export interface methods {
   verb: string;
   summary: string | undefined;
+  parameters?: { in: 'path' | 'query' }[];
   responses?: {
     [key: string]: {
       content: {

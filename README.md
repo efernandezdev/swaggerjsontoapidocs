@@ -1,14 +1,26 @@
 # swaggerjsontoapidocs CLI
 
-This project is a Command Line Interface (CLI) tool that generates API documentation from a Swagger JSON file. It is developed in TypeScript and uses Node.js.
+A Command Line Interface (CLI) tool that generates API documentation from a Swagger/OpenAPI JSON file. It is developed in TypeScript and uses Node.js. For every endpoint it generates a ready-to-use URL builder function with JSDoc documentation, so all your endpoints are centralized in one place.
+
+## Features
+
+- Reads Swagger/OpenAPI documents from a **remote URL** (`http://` / `https://`).
+- Generates one file per resource, containing one URL builder function per endpoint (HTTP methods on the same path are grouped into a single function).
+- Each function includes **JSDoc documentation** with HTTP verbs, summaries, the original endpoint and its path parameters.
+- Removes the base path from endpoints automatically (e.g., `/api/v1/`).
+- Configurable output: custom destination folder, flat file structure, and `.ts` or `.js` extensions.
+- Optional `--fnl` flag to force all function names to lowercase for consistency.
+- Optional `--api-model` flag that enriches the JSDoc with model references (**Query Parameter**, **Request Body**, **Response**), designed to work together with its companion CLI [swaggerjsontoapimodel](https://www.npmjs.com/package/swaggerjsontoapimodel).
 
 ## Installation
 
-Make sure you have Node.js installed on your system. Then, install the project dependencies by running:
+Install locally:
 
 ```bash
 npm install swaggerjsontoapidocs
 ```
+
+Or install globally to use it anywhere:
 
 ```bash
 npm install swaggerjsontoapidocs -g
@@ -34,14 +46,17 @@ MSYS_NO_PATHCONV=1 npx swaggerjsontoapidocs [options]
 
 ---
 
-### Available Arguments
+### Options
 
-- `-s, --swagger <url>` : URL of the Swagger/OpenAPI JSON (required).
-- `--bp <path>` : Base path to remove from endpoints (e.g. `/api/`) (required).
-- `-o, --output <path>` : Destination folder for generated files (optional).
-- `--skip-folder` : Generate flat files (no nested folders).
-- `--fnl` : Force function names to lowercase.
-- `-e, --ext <.ts|.js>` : Output file extension for generated files. Allowed values: `.ts` (default) or `.js`.
+| Option                             | Description                                                                              | Default      |
+| ---------------------------------- | ---------------------------------------------------------------------------------------- | ------------ |
+| `-s, --swagger <url>`              | URL of the Swagger/OpenAPI JSON (e.g., `http://localhost:5033/swagger/v1/swagger.json`). | _(required)_ |
+| `--bp <path>`                      | Base path to remove from endpoints (e.g., `/api/v1/`).                                   | _(required)_ |
+| `-o, --output <path>`              | Destination folder for the generated files. Files are written inside `<path>/api_docs/`. |              |
+| `--skip-folder`                    | Generate flat files instead of nested folders.                                           | `false`      |
+| `--fnl, --function-name-lowercase` | Force all function names to lowercase for consistency.                                   | `false`      |
+| `-e, --ext <.ts\|.js>`             | Extension of the generated files.                                                        | `.ts`        |
+| `--api-model`                      | Enrich the JSDoc with model references (requires `.ts`). Use with swaggerjsontoapimodel. | `false`      |
 
 ### Example Usage
 
@@ -240,18 +255,18 @@ export const Products_productId_Reviews_reviewId_Comments_commentId = (
 ) => `Products/${productId}/Reviews/${reviewId}/Comments/${commentId}`;
 ```
 
-### Result --function-name-lowercase
+### Result --fnl (function name lowercase)
 
 ```typescript
 // products.ts
-export const products_productId_reviews_reviewId_comments_commentId = (
+export const products_productid_reviews_reviewid_comments_commentid = (
   productId: any,
   reviewId: any,
   commentId: any,
 ) => `Products/${productId}/Reviews/${reviewId}/Comments/${commentId}`;
 ```
 
-### Advanced Usage
+## Advanced Usage
 
 ```bash
 npx swaggerjsontoapidocs -s http://localhost:5033/swagger/v1/swagger.json --bp /api/v1/ -o ./docs/ --skip-folder
@@ -271,6 +286,52 @@ docs/
     ├── products.ts
     └── users.ts
 ```
+
+## Companion Tool: swaggerjsontoapimodel
+
+This CLI pairs naturally with [swaggerjsontoapimodel](https://www.npmjs.com/package/swaggerjsontoapimodel), a CLI that generates TypeScript models (schema interfaces and query parameter types) from the same Swagger/OpenAPI document.
+
+When you run this tool with `--api-model` (and the default `.ts` extension), each JSDoc block is enriched with references to those generated models. The references are resolved from OpenAPI 3 documents: `in: query` parameters, `requestBody` schemas and response `$ref` schemas:
+
+```bash
+npx swaggerjsontoapidocs -s http://localhost:5033/swagger/v1/swagger.json --bp /api/v1/ --api-model
+```
+
+For example, given a `GET` + `POST` on `/api/v1/users/{userId}/orders` (with query parameters and an `Order` schema referenced by the request body and responses):
+
+### Result --api-model
+
+```typescript
+// users.ts
+/**
+ * ##### METHODS
+ * **GET**: List orders for a user
+ *
+ * **Query Parameter**: GetUsersOrders
+ *
+ * **Response**: Order[]
+ *
+ * **POST**: Create an order for a user
+ *
+ * **Request Body**: Order
+ *
+ * **Response**: Order
+ *
+ * ---
+ * **Endpoint**: `/api/v1/users/{userId}/orders`
+ *
+ * ---
+ * ##### PATH PARAMETERS
+ * @param userId - any
+ */
+export const users_userId_orders = (userId: any) => `users/${userId}/orders`;
+```
+
+- **Query Parameter**: name of the query params interface generated by swaggerjsontoapimodel for that method.
+- **Request Body**: model referenced by the OpenAPI 3 request body.
+- **Response**: model referenced by the response (`[]` is appended when it resolves to an array).
+
+Run both CLIs against the same document: swaggerjsontoapimodel generates `GetUsersOrders`, `Order`, etc., and this tool documents exactly where those models apply, so you get typed models plus documented endpoint functions working together out of the box.
 
 ## License
 
