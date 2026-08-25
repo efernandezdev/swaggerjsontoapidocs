@@ -47,6 +47,11 @@ const argv = yargs(hideBin(process.argv))
       describe: 'Choose generated file extension: .ts or .js',
       default: '.ts',
     },
+    'api-model': {
+      type: 'boolean',
+      describe: 'Use with swaggerjsontoapimodel',
+      default: false,
+    },
   })
   .version()
   .help()
@@ -65,6 +70,7 @@ function main() {
   const output = argv.output;
   const functionNameLowercase = argv.functionNameLowercase;
   const ext = argv.ext as params['ext'];
+  const apiModel = argv['api-model'];
 
   // Just show console.log
   console.log(chalk.blue(`Swagger Path: ${swaggerPath}`));
@@ -80,6 +86,9 @@ function main() {
   }
   if (ext) {
     console.log(chalk.blue(`file extension: ${ext}`));
+  }
+  if (apiModel) {
+    console.log(chalk.blue(`Use api-model: ${apiModel}`));
   }
   //
 
@@ -100,6 +109,7 @@ function main() {
           output,
           functionNameLowercase,
           ext,
+          apiModel,
         };
 
         initScript(params);

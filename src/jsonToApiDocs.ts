@@ -17,6 +17,7 @@ let paramsConfig: params = {
   output: undefined,
   functionNameLowercase: false,
   ext: '.ts',
+  apiModel: false,
 };
 
 async function cleanFolderOutPut() {
@@ -83,11 +84,12 @@ async function filterPathsObject() {
         .replace(regexStartWithSlash, '');
 
       const methods = Object.entries(pathValue as Record<string, methods>).map(
-        ([verb, { summary, responses, requestBody }]) => ({
+        ([verb, { summary, responses, requestBody, parameters }]) => ({
           verb,
           summary,
           responses,
           requestBody,
+          parameters,
         }),
       );
 
@@ -241,15 +243,25 @@ const generateDocumentation = (
 
       doc += method.summary ? `${method.summary}` : `without summary`;
 
-      const requestBody = findRefs(method.requestBody);
-      doc += requestBody.refs.size
-        ? `\n*\n* **Request Body**: ${normalizePascalCase(requestBody)}`
-        : '';
+      if (paramsConfig.ext === '.ts' && paramsConfig.apiModel) {
+        const queryParameter = method.parameters?.find(
+          (param) => param.in === 'query',
+        );
 
-      const responses = findRefs(method.responses);
-      doc += responses.refs.size
-        ? `\n*\n* **Response**: ${normalizePascalCase(responses)}${checkArrayType(responses)}`
-        : '';
+        doc += queryParameter
+          ? `\n*\n* **Query Parameter**: ${pascalCase(method.verb)}${pascalCase(endpoint.replace(/\/\{[^}]*\}/g, ''))}`
+          : '';
+
+        const requestBody = findRefs(method.requestBody);
+        doc += requestBody.refs.size
+          ? `\n*\n* **Request Body**: ${normalizePascalCase(requestBody)}`
+          : '';
+
+        const responses = findRefs(method.responses);
+        doc += responses.refs.size
+          ? `\n*\n* **Response**: ${normalizePascalCase(responses)}${checkArrayType(responses)}`
+          : '';
+      }
 
       if (index + 1 !== methods.length) {
         doc += '\n*';
@@ -294,6 +306,14 @@ const normalizePascalCase = (data: {
     .split('/')
     .pop()
     ?.split(' ')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join('');
+
+const pascalCase = (data: string) =>
+  data
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .split(' ')
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join('');

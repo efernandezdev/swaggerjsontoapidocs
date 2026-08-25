@@ -3,4 +3,5 @@ export interface params {
   functionNameLowercase: boolean;
   output?: string;
   ext: '.ts' | '.js';
+  apiModel?: boolean;
 }
