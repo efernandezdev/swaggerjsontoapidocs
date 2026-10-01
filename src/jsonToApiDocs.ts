@@ -18,6 +18,7 @@ let paramsConfig: params = {
   functionNameLowercase: false,
   ext: '.ts',
   apiModel: false,
+  openApi: false,
 };
 
 async function cleanFolderOutPut() {
@@ -84,12 +85,16 @@ async function filterPathsObject() {
         .replace(regexStartWithSlash, '');
 
       const methods = Object.entries(pathValue as Record<string, methods>).map(
-        ([verb, { summary, responses, requestBody, parameters }]) => ({
+        ([
+          verb,
+          { summary, responses, requestBody, parameters, deprecated },
+        ]) => ({
           verb,
           summary,
           responses,
           requestBody,
           parameters,
+          deprecated,
         }),
       );
 
@@ -107,7 +112,7 @@ async function filterPathsObject() {
 
   await makeFolders(foldersName);
 
-  await makeFileContainer(apiEndpoints, foldersName);
+  await makeFileContainer(apiEndpoints, foldersName, pathsObj.components);
 
   if (paramsConfig.output) {
     await moveFolderToChoosePath();
@@ -214,10 +219,139 @@ const findRefs = (
   return { refs, type };
 };
 
+const httpMethods = new Set([
+  'GET',
+  'HEAD',
+  'POST',
+  'PUT',
+  'DELETE',
+  'CONNECT',
+  'OPTIONS',
+  'TRACE',
+  'PATCH',
+  'QUERY',
+  'PRI',
+  'ACL',
+  'BASELINE-CONTROL',
+  'BIND',
+  'CHECKIN',
+  'CHECKOUT',
+  'COPY',
+  'LABEL',
+  'LINK',
+  'MKACTIVITY',
+  'MKCALENDAR',
+  'MKCOL',
+  'MKREDIRECTREF',
+  'MKWORKSPACE',
+  'MOVE',
+  'ORDERPATCH',
+  'PROPFIND',
+  'PROPPATCH',
+  'REBIND',
+  'REPORT',
+  'SEARCH',
+  'UNBIND',
+  'UNCHECKOUT',
+  'UNLINK',
+  'UNLOCK',
+  'UPDATE',
+  'UPDATEREDIRECTREF',
+  'VERSION-CONTROL',
+]);
+
+type responseComponents = {
+  responses?: Record<string, methods['responses'] extends infer T ? T : never>;
+};
+
+type responseModel = {
+  code: string;
+  type?: string;
+  ref?: string;
+};
+
+const getResponseModels = (
+  responses: methods['responses'],
+  components?: responseComponents,
+): responseModel[] => {
+  if (!responses) return [];
+
+  return Object.entries(responses).flatMap(([code, response]) => {
+    const responseRef = response?.$ref?.split('/').pop();
+
+    const resolvedResponse = responseRef
+      ? components?.responses?.[responseRef]
+      : response;
+
+    if (!resolvedResponse || Array.isArray(resolvedResponse)) return [];
+
+    return Object.entries(resolvedResponse.content ?? {})
+      .filter(([mediaType]) => mediaType.startsWith('application/'))
+      .map(([, media]) => {
+        const schema = media.schema;
+        const ref = schema?.$ref ?? schema?.items?.$ref;
+
+        return {
+          code,
+          type: schema?.type,
+          ref: ref?.split('/').pop(),
+        };
+      });
+  });
+};
+
+// --------------------------------------------------
+// OpenAPI -> TypeScript mapping
+// --------------------------------------------------
+const primitiveType = (type: string): string => {
+  switch (type) {
+    case 'integer':
+    case 'number':
+      return 'number';
+
+    case 'string':
+      return 'string';
+
+    case 'boolean':
+      return 'boolean';
+
+    case 'array':
+      return '[]';
+
+    default:
+      return type;
+  }
+};
+
+const formatResponseModels = (models: responseModel[]): string =>
+  [
+    ...new Map(
+      models.map(({ code, type, ref }) => {
+        const responseType = ref ?? type ?? 'unknown';
+        const responseName =
+          type === 'array' ? `${responseType}[]` : primitiveType(responseType);
+
+        return [`${code}`, `\n* \t\t ${code}: ${responseName}`];
+      }),
+    ).values(),
+  ].join('');
+
+const responseDocumentation = (
+  response: methods['responses'],
+  components?: responseComponents,
+): string => {
+  const documentation = formatResponseModels(
+    getResponseModels(response, components),
+  );
+
+  return documentation ? `\n*\n* - **Response**: \n* ${documentation}` : '';
+};
+
 const generateDocumentation = (
   endpoint: string,
   methods: methods[],
   apiEndpoint: string,
+  components?: responseComponents,
 ) => {
   const paramsMatch = endpoint.match(/\{([^{}]+)\}/g) || [];
 
@@ -239,28 +373,36 @@ const generateDocumentation = (
 
   const methodsDoc = methods
     .map((method, index) => {
-      let doc = '* **' + method.verb.toUpperCase() + '**: ';
+      if (method.verb && !httpMethods.has(method.verb.toLocaleUpperCase()))
+        return;
+
+      let doc = method.deprecated ? '* @deprecated \n*\n' : '';
+
+      doc += '* **' + method.verb.toUpperCase() + '**: ';
 
       doc += method.summary ? `${method.summary}` : `without summary`;
 
-      if (paramsConfig.ext === '.ts' && paramsConfig.apiModel) {
+      if (
+        (paramsConfig.ext === '.ts' && paramsConfig.apiModel) ||
+        (paramsConfig.ext === '.ts' && paramsConfig.openApi)
+      ) {
         const queryParameter = method.parameters?.find(
           (param) => param.in === 'query',
         );
 
-        doc += queryParameter
-          ? `\n*\n* **Query Parameter**: ${pascalCase(method.verb)}${pascalCase(endpoint.replace(/\/\{[^}]*\}/g, ''))}`
-          : '';
+        if (paramsConfig.apiModel) {
+          doc += queryParameter
+            ? `\n*\n* - **Query Parameter**: \n*\n* \t\t ${pascalCase(method.verb)}${pascalCase(endpoint.replace(/\/\{[^}]*\}/g, ''))}`
+            : '';
+        }
 
         const requestBody = findRefs(method.requestBody);
+
         doc += requestBody.refs.size
-          ? `\n*\n* **Request Body**: ${normalizePascalCase(requestBody)}`
+          ? `\n*\n* - **Request Body**: \n*\n* \t\t ${normalizePascalCase(requestBody)}`
           : '';
 
-        const responses = findRefs(method.responses);
-        doc += responses.refs.size
-          ? `\n*\n* **Response**: ${normalizePascalCase(responses)}${checkArrayType(responses)}`
-          : '';
+        doc += responseDocumentation(method.responses, components);
       }
 
       if (index + 1 !== methods.length) {
@@ -269,6 +411,7 @@ const generateDocumentation = (
 
       return doc;
     })
+    .filter(Boolean)
     .join('\n');
 
   const methodsLine = methodsDoc ? `* ##### METHODS\n${methodsDoc}` : '*';
@@ -290,20 +433,12 @@ ${paramsLine}
   };
 };
 
-const checkArrayType = (responses: {
-  refs: Set<string>;
-  type: Set<string>;
-}): '' | '[]' =>
-  responses.type.size && [...responses.type][0].toLowerCase() === 'array'
-    ? '[]'
-    : '';
-
 const normalizePascalCase = (data: {
   refs: Set<string>;
   type: Set<string>;
 }): string | undefined =>
   [...data.refs][0]
-    .split('/')
+    ?.split('/')
     .pop()
     ?.split(' ')
     .filter(Boolean)
@@ -321,6 +456,7 @@ const pascalCase = (data: string) =>
 async function makeFileContainer(
   apiEndpoints: apiEndpoints[],
   foldersName: string[],
+  components?: responseComponents,
 ) {
   // Step 1: Initialize files (Set handles uniqueness)
   for (const folder of new Set(foldersName)) {
@@ -342,6 +478,7 @@ async function makeFileContainer(
       endpoint,
       methods,
       apiEndpoint,
+      components,
     );
 
     const line = `${jsDoc} export const ${name} = (${args}) => \`${templatePath}\`;\n`;

@@ -8,11 +8,17 @@ export interface methods {
   verb: string;
   summary: string | undefined;
   parameters?: { in: 'path' | 'query' }[];
+  deprecated?: boolean;
   responses?: {
     [key: string]: {
-      content: {
+      $ref?: string;
+      content?: {
         [key: string]: {
-          schema?: { type: string; items: { $ref: string } };
+          schema?: {
+            type?: string;
+            $ref?: string;
+            items?: { type?: string; $ref?: string };
+          };
         };
       };
     };

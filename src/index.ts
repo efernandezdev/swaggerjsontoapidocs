@@ -49,7 +49,12 @@ const argv = yargs(hideBin(process.argv))
     },
     'api-model': {
       type: 'boolean',
-      describe: 'Use with swaggerjsontoapimodel',
+      describe: 'Use with swaggerjsontoapimodel (requires .ts)',
+      default: false,
+    },
+    openApi: {
+      type: 'boolean',
+      describe: 'Use with openapi-generator (requires .ts)',
       default: false,
     },
   })
@@ -71,6 +76,7 @@ function main() {
   const functionNameLowercase = argv.functionNameLowercase;
   const ext = argv.ext as params['ext'];
   const apiModel = argv['api-model'];
+  const openApi = argv['openApi'];
 
   // Just show console.log
   console.log(chalk.blue(`Swagger Path: ${swaggerPath}`));
@@ -89,6 +95,9 @@ function main() {
   }
   if (apiModel) {
     console.log(chalk.blue(`Use api-model: ${apiModel}`));
+  }
+  if (openApi) {
+    console.log(chalk.blue(`Use openApi: ${openApi}`));
   }
   //
 
@@ -110,6 +119,7 @@ function main() {
           functionNameLowercase,
           ext,
           apiModel,
+          openApi,
         };
 
         initScript(params);

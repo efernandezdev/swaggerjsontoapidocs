@@ -4,4 +4,5 @@ export interface params {
   output?: string;
   ext: '.ts' | '.js';
   apiModel?: boolean;
+  openApi?: boolean;
 }
