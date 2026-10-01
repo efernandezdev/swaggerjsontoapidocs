@@ -1,3 +1,10 @@
+# [1.13.0](https://github.com/efernandezdev/swaggerjsontoapidocs/compare/v1.12.0...v1.13.0) (2026-10-01)
+
+
+### Features
+
+* add openApi support and enhance response handling in API documentation generation ([5bc7ab8](https://github.com/efernandezdev/swaggerjsontoapidocs/commit/5bc7ab897b4a6c93a3fcffaed1273b9f66615c39))
+
 # [1.12.0](https://github.com/efernandezdev/swaggerjsontoapidocs/compare/v1.11.0...v1.12.0) (2026-08-25)
 
 
